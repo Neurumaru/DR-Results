@@ -35,19 +35,21 @@ def connection_S2I(connection, data1_S2I, data2_S2I):
         new_connection[(data1_S2I.get(c[0]), data2_S2I.get(c[1]))] = connection[c]
     return new_connection
 
+data = 'atc-code'
+# data = 'chemical'
 
-drug_similarity = np.load('outputs/drug_similarity.npy')
-disease_similarity = np.load('outputs/disease_similarity.npy')
-drug_disease_association_matrix = np.load('outputs/drug_disease_association.npy')
-with open('outputs/drug_disease_association.pickle', 'rb') as f:
+drug_similarity = np.load(data + '/outputs/numpy/drug_similarity.npy')
+disease_similarity = np.load(data + '/outputs/numpy/disease_similarity.npy')
+drug_disease_association_matrix = np.load(data + '/outputs/numpy/drug_disease_association.npy')
+with open(data + '/outputs/dictionary/drug_disease_association.pickle', 'rb') as f:
     drug_disease_association_connection = pickle.load(f)
-with open('outputs/drug_S2I.pickle', 'rb') as f:
+with open(data + '/outputs/dictionary/drug_S2I.pickle', 'rb') as f:
     drug_S2I = pickle.load(f)
-with open('outputs/disease_S2I.pickle', 'rb') as f:
+with open(data + '/outputs/dictionary/disease_S2I.pickle', 'rb') as f:
     disease_S2I = pickle.load(f)
 drug_disease_association_connection = connection_S2I(drug_disease_association_connection, drug_S2I, disease_S2I)
-disease_10_fold, disease_10_fold_data = folds("inputs/disease_10-fold.txt", drug_disease_association_connection, disease_S2I, 1)
-drug_10_fold, drug_10_fold_data = folds("inputs/drug_10-fold.txt", drug_disease_association_connection, drug_S2I, 0)
+disease_10_fold, disease_10_fold_data = folds(data + '/inputs/disease_10-fold.txt', drug_disease_association_connection, disease_S2I, 1)
+drug_10_fold, drug_10_fold_data = folds(data + '/inputs/drug_10-fold.txt', drug_disease_association_connection, drug_S2I, 0)
 
 print(f'drug_similarity: {drug_similarity.shape}')
 print(f'drug_S2I: {len(drug_S2I)}')
@@ -58,14 +60,16 @@ print(f'drug_disease_association_connection: {len(drug_disease_association_conne
 print()
 disease_drug_association = drug_disease_association_matrix.T
 
-foldername = 'results'
+foldername = data + '/results'
 
-# filename = 'results.mat'
-# matrixname = 'results'
-# transpose = False
-filename = 'final_results.mat'
-matrixname = 'final_results'
-transpose = True
+filename = 'results.mat'
+matrixname = 'results'
+transpose = False
+
+# filename = 'final_results.mat'
+# matrixname = 'final_results'
+# transpose = True
+
 # filename = 'DDR.mat'
 # matrixname = 'drdi'
 # transpose = True
@@ -109,15 +113,14 @@ for fold in range(10):
         continue
     scores = np.array(scores) / np.max(scores)
 
-    plt.figure()
-    plt.plot(indics, labels)
-    plt.plot(indics, scores)
-    plt.title(f'Disease{fold}')
-    plt.figure()
-
-    plt.plot(range(FP), TPR)
-    plt.xscale('linear')
-    plt.title(f'Disease{fold}')
+    # plt.figure()
+    # plt.plot(indics, labels)
+    # plt.plot(indics, scores)
+    # plt.title(f'Disease{fold}')
+    # plt.figure()
+    # plt.plot(range(FP), TPR)
+    # plt.xscale('linear')
+    # plt.title(f'Disease{fold}')
 
     print(f'Disease{fold}: {AUC}')
 
@@ -161,15 +164,14 @@ for fold in range(10):
         continue
     scores = np.array(scores) / np.max(scores)
     
-    plt.figure()
-    plt.plot(indics, labels)
-    plt.plot(indics, scores)
-    plt.title(f'Drug{fold}')
-    plt.figure()
-
-    plt.plot(range(FP), TPR)
-    plt.xscale('linear')
-    plt.title(f'Drug{fold}')
+    # plt.figure()
+    # plt.plot(indics, labels)
+    # plt.plot(indics, scores)
+    # plt.title(f'Drug{fold}')
+    # plt.figure()
+    # plt.plot(range(FP), TPR)
+    # plt.xscale('linear')
+    # plt.title(f'Drug{fold}')
     
     print(f'Drug{fold}: {AUC}')
 

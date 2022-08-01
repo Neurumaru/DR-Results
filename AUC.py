@@ -62,18 +62,19 @@ disease_drug_association = drug_disease_association_matrix.T
 
 foldername = data + '/results'
 
-filename = 'results.mat'
-matrixname = 'results'
-transpose = False
+# filename = 'results.mat'
+# matrixname = 'results'
+# transpose = False
 
-# filename = 'final_results.mat'
-# matrixname = 'final_results'
-# transpose = True
+filename = 'final_results.mat'
+matrixname = 'final_results'
+transpose = True
 
 # filename = 'DDR.mat'
 # matrixname = 'drdi'
 # transpose = True
 
+AUCs = []
 for fold in range(10):
     if os.path.isdir(f'{foldername}/Disease{fold}') is False:
         continue
@@ -122,9 +123,12 @@ for fold in range(10):
     # plt.xscale('linear')
     # plt.title(f'Disease{fold}')
 
-    print(f'Disease{fold}: {AUC}')
+    print(f'Disease{fold}: {AUC:.4f}')
+    AUCs.append(AUC)
+print(f'Disease Mean: {np.mean(AUCs):.4f}')
 
 
+AUCs = []
 for fold in range(10):
     if os.path.isdir(f'{foldername}/Drug{fold}') is False:
         continue
@@ -173,6 +177,8 @@ for fold in range(10):
     # plt.xscale('linear')
     # plt.title(f'Drug{fold}')
     
-    print(f'Drug{fold}: {AUC}')
+    print(f'Drug{fold}: {AUC:.4f}')
+    AUCs.append(AUC)
+print(f'Drug Mean: {np.mean(AUCs):.4f}')
 
 # plt.show()

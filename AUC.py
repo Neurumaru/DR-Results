@@ -59,8 +59,6 @@ print(f'{"data":^8s} {"CV":^7s} {"algorithm":^12s} {"AUC":^6s}')
 print(f'===================================')
 for data in ['atc-code', 'chemical']:
     y_true = load_true(f'results/{data}/association.txt')
-    with open(data + '/outputs/dictionary/drug_disease_association.pickle', 'rb') as f:
-        y_true = pickle.load(f)
     for fold in ['Drug',  'Disease']:
         plt.figure()
         for algorithm in ['BGMSDDA', 'DR-IBRW']:

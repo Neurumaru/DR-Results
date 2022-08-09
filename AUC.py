@@ -1,184 +1,82 @@
-import numpy as np
-import pickle
-import time
-import random
 import os
-import scipy.io as sio
+import pickle
+import numpy as np
 from matplotlib import pyplot as plt
 
-from progress import progress, progressEnd
 
+def load_true(filename):
+    y_true = set()
 
-def folds(filename, association, data_S2I, i):
+    if os.path.isfile(filename) is False:
+        return None
+    
     with open(filename, 'r') as f:
-        lines = f.readlines()
-
-    folds_list = [list() for _ in range(len(lines))]
-    folds_dict = dict()
-    data_list = []
-    for line_idx, line in enumerate(lines):
-        splitted = line.strip().split()
-        data = list(map(data_S2I.get, splitted))
-        data_list.append(data)
-        fold_dict = dict(zip(data, np.full(len(splitted), line_idx)))
-        folds_dict.update(fold_dict)
-
-    for connection in association:
-        folds_list[folds_dict[connection[i]]].append(connection)
-
-    return folds_list, data_list
+        for line in f:
+            drug, disease = line.strip().split('\t')
+            y_true.add((drug, disease))
+    
+    return y_true
 
 
-def connection_S2I(connection, data1_S2I, data2_S2I):
-    new_connection = dict()
-    for c in connection:
-        new_connection[(data1_S2I.get(c[0]), data2_S2I.get(c[1]))] = connection[c]
-    return new_connection
+def load_score(filename):
+    y_score = []
+    
+    if os.path.isfile(filename) is False:
+        return None
 
-data = 'atc-code'
-# data = 'chemical'
+    with open(filename, 'r') as f:
+        for line in f:
+            drug, disease, score = line.strip().split('\t')
+            y_score.append((drug, disease, float(score)))
 
-drug_similarity = np.load(data + '/outputs/numpy/drug_similarity.npy')
-disease_similarity = np.load(data + '/outputs/numpy/disease_similarity.npy')
-drug_disease_association_matrix = np.load(data + '/outputs/numpy/drug_disease_association.npy')
-with open(data + '/outputs/dictionary/drug_disease_association.pickle', 'rb') as f:
-    drug_disease_association_connection = pickle.load(f)
-with open(data + '/outputs/dictionary/drug_S2I.pickle', 'rb') as f:
-    drug_S2I = pickle.load(f)
-with open(data + '/outputs/dictionary/disease_S2I.pickle', 'rb') as f:
-    disease_S2I = pickle.load(f)
-drug_disease_association_connection = connection_S2I(drug_disease_association_connection, drug_S2I, disease_S2I)
-disease_10_fold, disease_10_fold_data = folds(data + '/inputs/disease_10-fold.txt', drug_disease_association_connection, disease_S2I, 1)
-drug_10_fold, drug_10_fold_data = folds(data + '/inputs/drug_10-fold.txt', drug_disease_association_connection, drug_S2I, 0)
+    return y_score
 
-print(f'drug_similarity: {drug_similarity.shape}')
-print(f'drug_S2I: {len(drug_S2I)}')
-print(f'disease_similarity: {disease_similarity.shape}')
-print(f'disease_S2I: {len(disease_S2I)}')
-print(f'drug_disease_association_matrix : {drug_disease_association_matrix.shape}')
-print(f'drug_disease_association_connection: {len(drug_disease_association_connection)}')
-print()
-disease_drug_association = drug_disease_association_matrix.T
 
-foldername = data + '/results'
-
-# filename = 'results.mat'
-# matrixname = 'results'
-# transpose = False
-
-filename = 'final_results.mat'
-matrixname = 'final_results'
-transpose = True
-
-# filename = 'DDR.mat'
-# matrixname = 'drdi'
-# transpose = True
-
-AUCs = []
-for fold in range(10):
-    if os.path.isdir(f'{foldername}/Disease{fold}') is False:
-        continue
-    if os.path.isfile(f'{foldername}/Disease{fold}/{filename}') is False:
-        continue
-    predict = sio.loadmat(f'{foldername}/Disease{fold}/{filename}')[matrixname]
-    if transpose:
-        predict = predict.T
-
-    score_list = []
-    fold_data = sorted(disease_10_fold_data[fold])
-    for j in range(len(fold_data)):
-        for i in range(len(drug_S2I)):
-            score_list.append((i, fold_data[j], predict[fold_data[j], i]))
-
-    score_list.sort(key=lambda x: (x[2]), reverse=True)
+def AUC_ROC(y_true, y_score, sorted=True):
     TP, FP = 0, 0
+    TPs, FPs = [], []
     TP_sum = 0
-    indics = []
-    scores = []
-    labels = []
-    TPR = []
-    for idx, (drug, disease, score) in enumerate(score_list):
-        indics.append(idx)
-        scores.append(score)
-        labels.append(drug_disease_association_matrix[drug, disease])
-        if drug_disease_association_matrix[drug, disease] == 1:
+
+    if sorted is False:
+        y_score.sort(key=lambda x: x[2], reverse=True)
+
+    for drug, disease, _ in y_score:
+        if (drug, disease) in y_true:
             TP += 1
         else:
             FP += 1
             TP_sum += TP
-            TPR.append(TP)
+        TPs.append(TP)
+        FPs.append(FP)
     AUC = TP_sum / (TP * FP)
+    TPR = np.array(TPs) / TP
+    FPR = np.array(FPs) / FP
 
-    if np.max(scores) == 0:
-        print(f'Disease{fold}: No Score')
-        continue
-    scores = np.array(scores) / np.max(scores)
-
-    # plt.figure()
-    # plt.plot(indics, labels)
-    # plt.plot(indics, scores)
-    # plt.title(f'Disease{fold}')
-    # plt.figure()
-    # plt.plot(range(FP), TPR)
-    # plt.xscale('linear')
-    # plt.title(f'Disease{fold}')
-
-    print(f'Disease{fold}: {AUC:.4f}')
-    AUCs.append(AUC)
-print(f'Disease Mean: {np.mean(AUCs):.4f}')
+    return AUC, TPR, FPR
 
 
-AUCs = []
-for fold in range(10):
-    if os.path.isdir(f'{foldername}/Drug{fold}') is False:
-        continue
-    if os.path.isfile(f'{foldername}/Drug{fold}/{filename}') is False:
-        continue
-    predict = sio.loadmat(f'{foldername}/Drug{fold}/{filename}')[matrixname]
-    if transpose:
-        predict = predict.T
+print(f'{"data":^8s} {"CV":^7s} {"algorithm":^12s} {"AUC":^6s}')
+print(f'===================================')
+for data in ['atc-code', 'chemical']:
+    y_true = load_true(f'results/{data}/association.txt')
+    with open(data + '/outputs/dictionary/drug_disease_association.pickle', 'rb') as f:
+        y_true = pickle.load(f)
+    for fold in ['Drug',  'Disease']:
+        plt.figure()
+        for algorithm in ['BGMSDDA', 'DR-IBRW']:
+            print(f'{data:^8s} {fold:^7s} {algorithm:^12s}', end='')
 
-    score_list = []
-    fold_data = sorted(drug_10_fold_data[fold])
-    for i in range(len(fold_data)):
-        for j in range(len(disease_S2I)):
-            score_list.append((fold_data[i], j, predict[j, fold_data[i]]))
+            y_score = load_score(f'results/{data}/{algorithm}_{fold}.txt')
 
-    score_list.sort(key=lambda x: x[2], reverse=True)
-    TP, FP = 0, 0
-    TP_sum = 0
-    indics = []
-    scores = []
-    labels = []
-    TPR = []
-    for idx, (drug, disease, score) in enumerate(score_list):
-        indics.append(idx)
-        scores.append(score)
-        labels.append(drug_disease_association_matrix[drug, disease])
-        if drug_disease_association_matrix[drug, disease] == 1:
-            TP += 1
-        else:
-            FP += 1
-            TP_sum += TP
-            TPR.append(TP)
-    AUC = TP_sum / (TP * FP)
+            if y_score == None:
+                continue
 
-    if np.max(scores) == 0:
-        print(f'Drug{fold}: No Score')
-        continue
-    scores = np.array(scores) / np.max(scores)
-    
-    # plt.figure()
-    # plt.plot(indics, labels)
-    # plt.plot(indics, scores)
-    # plt.title(f'Drug{fold}')
-    # plt.figure()
-    # plt.plot(range(FP), TPR)
-    # plt.xscale('linear')
-    # plt.title(f'Drug{fold}')
-    
-    print(f'Drug{fold}: {AUC:.4f}')
-    AUCs.append(AUC)
-print(f'Drug Mean: {np.mean(AUCs):.4f}')
+            AUC, TPR, FPR = AUC_ROC(y_true, y_score)
+            print(f' {AUC:.4f}')
 
-# plt.show()
+            plt.title(f'CV-{fold} ({data})')
+            plt.plot(FPR, TPR, label=f'{algorithm} (AUC={AUC:.4f})')
+        plt.ylabel('TPR')
+        plt.xlabel('FPR')
+        plt.legend()
+plt.show()

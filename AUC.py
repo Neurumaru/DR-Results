@@ -1,5 +1,4 @@
 import os
-import pickle
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -56,21 +55,19 @@ def AUC_ROC(y_true, y_score, sorted=True):
 
 
 print(f'{"data":^8s} {"CV":^7s} {"algorithm":^12s} {"AUC":^6s}')
-print(f'===================================')
+print(f'====================================')
 for data in ['atc-code', 'chemical']:
     y_true = load_true(f'results/{data}/association.txt')
     for fold in ['Drug',  'Disease']:
         plt.figure()
-        for algorithm in ['BGMSDDA', 'DR-IBRW']:
-            print(f'{data:^8s} {fold:^7s} {algorithm:^12s}', end='')
-
+        for algorithm in ['BGMSDDA', 'BNNR', 'DR-IBRW', 'DRIMC', 'DRRS', 'MBiRW', 'OMC', 'TRNRWRH']:
             y_score = load_score(f'results/{data}/{algorithm}_{fold}.txt')
 
             if y_score == None:
                 continue
 
             AUC, TPR, FPR = AUC_ROC(y_true, y_score)
-            print(f' {AUC:.4f}')
+            print(f'{data:^8s} {fold:^7s} {algorithm:^12s} {AUC:.4f}')
 
             plt.title(f'CV-{fold} ({data})')
             plt.plot(FPR, TPR, label=f'{algorithm} (AUC={AUC:.4f})')

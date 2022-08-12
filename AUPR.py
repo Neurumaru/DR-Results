@@ -1,4 +1,5 @@
 import os
+import numpy as np
 from matplotlib import pyplot as plt
 
 
@@ -67,7 +68,7 @@ for data in ['atc-code', 'chemical']:
     y_true = load_true(f'results/{data}/association.txt')
     for fold in ['Drug',  'Disease']:
         plt.figure()
-        for algorithm in ['BGMSDDA', 'BNNR', 'DR-IBRW', 'DRIMC', 'DRRS', 'MBiRW', 'OMC', 'TRNRWRH']:
+        for algorithm in ['BGMSDDA', 'BNNR', 'DR-IBRW', 'DRIMC', 'DRRS', 'LAGCN', 'MBiRW', 'MSBMF', 'OMC', 'TPNRWRH']:
 
             y_score = load_score(f'results/{data}/{algorithm}_{fold}.txt')
 
@@ -78,8 +79,9 @@ for data in ['atc-code', 'chemical']:
             print(f'{data:^8s} {fold:^7s} {algorithm:^12s} {AUPR:.4f}')
 
             plt.title(f'CV-{fold} ({data})')
-            plt.plot(recall, precision, label=f'{algorithm} (AUPR={AUPR:.4f})')
-        plt.ylabel('TPR')
-        plt.xlabel('FPR')
+            plt.plot(recall, precision, label=f'{algorithm})')
+            # plt.plot(recall, precision, label=f'{algorithm} (AUPR={AUPR:.4f})')
+        plt.ylabel('Precision*')
+        plt.xlabel('Recall')
         plt.legend()
 plt.show()

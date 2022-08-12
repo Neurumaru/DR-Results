@@ -70,7 +70,8 @@ for data in ['atc-code', 'chemical']:
             print(f'{data:^8s} {fold:^7s} {algorithm:^12s} {AUC:.4f}')
 
             plt.title(f'CV-{fold} ({data})')
-            plt.plot(FPR, TPR, label=f'{algorithm} (AUC={AUC:.4f})')
+            plt.plot(FPR, TPR, label=f'{algorithm}')
+            # plt.plot(FPR, TPR, label=f'{algorithm} (AUC={AUC:.4f})')
         plt.ylabel('TPR')
         plt.xlabel('FPR')
         plt.legend()

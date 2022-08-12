@@ -63,7 +63,7 @@ for data in ['atc-code', 'chemical']:
     y_true = load_true(f'results/{data}/association.txt')
     for fold in ['Drug',  'Disease']:
         plt.figure()
-        for algorithm in ['BGMSDDA', 'BNNR', 'DR-IBRW', 'DRIMC', 'DRRS', 'LAGCN', 'MBiRW', 'MSBMF', 'OMC', 'TPNRWRH']:
+        for algorithm in ['ANMF', 'BGMSDDA', 'BNNR', 'DR-IBRW', 'DRIMC', 'DRRS', 'LAGCN', 'MBiRW', 'MSBMF', 'OMC', 'TPNRWRH']:
             y_score = load_score(f'results/{data}/{algorithm}_{fold}.txt')
 
             if y_score == None:

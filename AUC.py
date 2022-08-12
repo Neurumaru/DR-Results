@@ -64,6 +64,7 @@ for data in ['atc-code', 'chemical']:
             y_score = load_score(f'results/{data}/{algorithm}_{fold}.txt')
 
             if y_score == None:
+                print(f'{data:^8s} {fold:^7s} {algorithm:^12s}')
                 continue
 
             AUC, TPR, FPR = AUC_ROC(y_true, y_score)

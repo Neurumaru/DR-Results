@@ -3,6 +3,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 
+
 def load_true(filename):
     y_true = set()
 
@@ -54,6 +55,27 @@ def AUC_ROC(y_true, y_score, sorted=True):
     return AUC, TPR, FPR
 
 
+def cmap_to_float(cmap):
+    for label in cmap:
+        cmap[label] = np.array(cmap[label], dtype=np.float32) / 255.0
+    return cmap
+
+
+cmap = {
+    'ANMF': (230, 0, 18, 255),
+    'BGMSDDA': (243, 152, 0, 255), 
+    'BNNR': (255, 241, 0, 255), 
+    'DR-IBRW': (34, 172, 56, 255), 
+    'DRIMC': (0, 160, 233, 255), 
+    'DRRS': (0, 71, 157, 255), 
+    'LAGCN': (96, 25, 134, 255), 
+    'MBiRW': (228, 0, 127, 255), 
+    'MSBMF': (160, 160, 160, 255),
+    'OMC': (83, 83, 83, 255),
+    'TPNRWRH': (0, 0, 0, 255)
+}
+cmap = cmap_to_float(cmap)
+
 print(f'{"data":^8s} {"CV":^7s} {"algorithm":^12s} {"AUC":^6s}')
 print(f'====================================')
 for data in ['atc-code', 'chemical']:
@@ -71,9 +93,10 @@ for data in ['atc-code', 'chemical']:
             print(f'{data:^8s} {fold:^7s} {algorithm:^12s} {AUC:.4f}')
 
             plt.title(f'CV-{fold} ({data})')
-            plt.plot(FPR, TPR, label=f'{algorithm}')
+            plt.plot(FPR, TPR, c=cmap[algorithm], label=f'{algorithm}')
             # plt.plot(FPR, TPR, label=f'{algorithm} (AUC={AUC:.4f})')
         plt.ylabel('TPR')
         plt.xlabel('FPR')
         plt.legend()
-plt.show()
+        plt.savefig(f'images/AUC CV-{fold} ({data}).png')
+# plt.show()

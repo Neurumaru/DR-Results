@@ -153,11 +153,11 @@ for data in datas:
                 continue
 
             x = list(results[data][fold][algorithm].keys())
-            y = (np.array(list(results[data][fold][algorithm].values())))
+            y = (np.array(list(results[data][fold][algorithm].values()))-min_values) / (max_values-min_values)
             plt.title(f'CV-{fold} ({data})')
             plt.plot(x, y, c=cmap[algorithm], label=f'{algorithm})')
         plt.ylabel('AUPR')
         plt.xlabel('a')
         plt.legend()
-        plt.savefig(f'images/AUPR-a CV-{fold} ({data}).png')
+        plt.savefig(f'images/AUPR-a CV-{fold} ({data}) (Normalized).png')
 # plt.show()
